@@ -1,0 +1,1307 @@
+{
+	"info": {
+		"_postman_id": "f6152e50-54f9-448d-aa8e-d690198fed8b",
+		"name": "MELI Order Management System",
+		"description": "REST API for managing clients, items, and orders in the MELI e-commerce platform.\n\n## Base URL\n\nLocal: [http://localhost:8080](http://localhost:8080)\n\n## Authentication\n\nCurrently no authentication required (development only)\n\n## Common Response Codes\n\n- 200 OK: Successful request\n    \n- 201 Created: Resource successfully created\n    \n- 204 No Content: Successful deletion\n    \n- 400 Bad Request: Validation error or business rule violation\n    \n- 404 Not Found: Resource not found\n    \n- 500 Internal Server Error: Server error\n    \n\n## Error Response Format\n\n```json  \n{  \n\"status\": 400,  \n\"message\": \"Error description\",  \n\"timestamp\": \"2025-10-14T10:30:00\"  \n}\n``` ",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48954560",
+		"_collection_link": "https://ramsalue-5809832.postman.co/workspace/cdc23105-5285-4ecc-85bf-8776dac31a99/collection/48954560-f6152e50-54f9-448d-aa8e-d690198fed8b?action=share&source=collection_link&creator=48954560"
+	},
+	"item": [
+		{
+			"name": "Client management",
+			"item": [
+				{
+					"name": "Create client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 201\r",
+									"pm.test(\"Status code is 201 Created\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"// Test: Response has required fields\r",
+									"pm.test(\"Response has client ID\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('idClient');\r",
+									"    pm.expect(jsonData.idClient).to.be.a('number');\r",
+									"});\r",
+									"\r",
+									"// Save client ID for later use\r",
+									"if (pm.response.code === 201) {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.environment.set(\"client_id\", jsonData.idClient);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"John Smith\",\r\n  \"address\": \"123 Main Street, New York, NY 10001\",\r\n  \"age\": 30\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/clients",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all clients",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.be.an('array');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get client by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Client has correct structure\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('idClient');\r",
+									"    pm.expect(jsonData).to.have.property('name');\r",
+									"    pm.expect(jsonData).to.have.property('address');\r",
+									"    pm.expect(jsonData).to.have.property('age');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/{{client_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"{{client_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Client was updated\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.name).to.include(\"Updated\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"John Smith Updated\",\r\n  \"address\": \"456 Oak Avenue, New York, NY 10002\",\r\n  \"age\": 31\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/clients/{{client_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"{{client_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search clients by name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Results contain search term\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    if (jsonData.length > 0) {\r",
+									"        pm.expect(jsonData[0].name.toLowerCase()).to.include(\"john\");\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/search?name=John",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "John"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get clients by age range",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Clients are within age range\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    jsonData.forEach(function(client) {\r",
+									"        pm.expect(client.age).to.be.at.least(25);\r",
+									"        pm.expect(client.age).to.be.at.most(40);\r",
+									"    });\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/age-range?minAge=25&maxAge=40",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"age-range"
+							],
+							"query": [
+								{
+									"key": "minAge",
+									"value": "25"
+								},
+								{
+									"key": "maxAge",
+									"value": "40"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get clients with orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/with-orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"with-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get clients without orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/without-orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"without-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get client order count",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Count is a number\", function () {\r",
+									"    var count = pm.response.json();\r",
+									"    pm.expect(count).to.be.a('number');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/{{client_id}}/order-count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"{{client_id}}",
+								"order-count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/clients/{{client_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"clients",
+								"{{client_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Item managment",
+			"item": [
+				{
+					"name": "Create item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response has item ID\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('itemId');\r",
+									"});\r",
+									"\r",
+									"if (pm.response.code === 201) {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.environment.set(\"item_id\", jsonData.itemId);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Wireless Mouse 2025\",\r\n  \"description\": \"Ergonomic wireless mouse without USB receiver\",\r\n  \"price\": 29.99\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all items",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get item by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/{{item_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"{{item_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Wireless Mouse Pro\",\r\n  \"description\": \"Premium ergonomic wireless mouse with USB receiver\",\r\n  \"price\": 39.99\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/items/{{item_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"{{item_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search items by name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/search?name=mouse",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "mouse"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get items by price range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/price-range?minPrice=20&maxPrice=50",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"price-range"
+							],
+							"query": [
+								{
+									"key": "minPrice",
+									"value": "20"
+								},
+								{
+									"key": "maxPrice",
+									"value": "50"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get items within budget",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/within-budget?maxPrice=100",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"within-budget"
+							],
+							"query": [
+								{
+									"key": "maxPrice",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get items sorted by price ascending",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/sorted/price-asc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"sorted",
+								"price-asc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get items by price descending",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/sorted/price-desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"sorted",
+								"price-desc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get items in orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/in-orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"in-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get items never ordered",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/never-ordered",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"never-ordered"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get item order count",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/{{item_id}}/order-count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"{{item_id}}",
+								"order-count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get item top expensive",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/top-expensive?limit=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"top-expensive"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/items/{{item_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"items",
+								"{{item_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order managment",
+			"item": [
+				{
+					"name": "Create order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Order has client and items\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('client');\r",
+									"    pm.expect(jsonData).to.have.property('items');\r",
+									"    pm.expect(jsonData.items).to.be.an('array');\r",
+									"    pm.expect(jsonData.items.length).to.be.greaterThan(0);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Order status is PENDING\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.status).to.equal(\"PENDING\");\r",
+									"});\r",
+									"\r",
+									"if (pm.response.code === 201) {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.environment.set(\"order_id\", jsonData.idOrder);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"clientId\": {{client_id}},\r\n  \"purchaseDate\": \"2025-10-14\",\r\n  \"deliveryDate\": \"2025-10-21\",\r\n  \"itemIds\": [{{item_id}}]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all orders",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Orders include client and items\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    if (jsonData.length > 0) {\r",
+									"        pm.expect(jsonData[0]).to.have.property('client');\r",
+									"        pm.expect(jsonData[0]).to.have.property('items');\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get order by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Order has complete structure\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('idOrder');\r",
+									"    pm.expect(jsonData).to.have.property('client');\r",
+									"    pm.expect(jsonData).to.have.property('items');\r",
+									"    pm.expect(jsonData).to.have.property('purchaseDate');\r",
+									"    pm.expect(jsonData).to.have.property('status');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"clientId\": {{client_id}},\r\n  \"purchaseDate\": \"2025-10-14\",\r\n  \"deliveryDate\": \"2025-10-25\",\r\n  \"itemIds\": [{{item_id}}]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update order status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Status was updated\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.status).to.equal(\"PROCESSING\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}/status?status=PROCESSING",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}",
+								"status"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "PROCESSING"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add items to order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[2, 3]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}/items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove item from order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}/items/{{item_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}",
+								"items",
+								"{{item_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Order status is CANCELLED\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.status).to.equal(\"CANCELLED\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}/cancel",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get orders by client",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/client/{{client_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"client",
+								"{{client_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get order by status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/status/PENDING",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"status",
+								"PENDING"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get orders by date range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/date-range?startDate=2025-10-01&endDate=2025-10-31",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"date-range"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2025-10-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-10-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get recent orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/recent?days=7",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"recent"
+							],
+							"query": [
+								{
+									"key": "days",
+									"value": "7"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get orders in transit",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/in-transit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"in-transit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get overdue orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/overdue",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"overdue"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get orders containing item",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/containing-item/{{item_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"containing-item",
+								"{{item_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Count order by status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/count-by-status?status=PENDING",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"count-by-status"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/orders/{{order_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{order_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
