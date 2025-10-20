@@ -1,0 +1,8 @@
+========================================
+   MELI Order Management System
+   DEVELOPMENT ENVIRONMENT
+========================================
+   Profile: DEV
+   Port: 8080
+   Database: PostgreSQL (Local)
+========================================

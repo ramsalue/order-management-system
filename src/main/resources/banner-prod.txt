@@ -1,0 +1,10 @@
+========================================
+   MELI Order Management System
+   PRODUCTION ENVIRONMENT
+========================================
+   Profile: PRODUCTION
+   Port: 8080
+   Status: LIVE
+========================================
+   DO NOT DEBUG IN PRODUCTION
+========================================
