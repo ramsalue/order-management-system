@@ -4,6 +4,12 @@ import com.meli.ordermanagementsystem.dto.ClientDTO;
 import com.meli.ordermanagementsystem.model.Client;
 import com.meli.ordermanagementsystem.service.ClientService;
 import com.meli.ordermanagementsystem.util.EntityMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +25,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/clients")
+@Tag(name = "Clients", description = "Client management operations")
 public class ClientController {
 
     private final ClientService clientService;
@@ -30,7 +37,25 @@ public class ClientController {
     public ClientController(ClientService clientService) {
         this.clientService = clientService;
     }
-
+    @Operation(
+            summary = "Create a new client",
+            description = "Creates a new client in the system. The client name must be unique and age must be 18 or older."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Client created successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid input data or client name already exists",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Creates a new client
      * POST /api/clients
@@ -44,7 +69,25 @@ public class ClientController {
         ClientDTO responseDTO = EntityMapper.toClientDTO(savedClient);
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
-
+    @Operation(
+            summary = "Get client by ID",
+            description = "Retrieves a specific client by their unique identifier"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Client found and returned successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Client not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Retrieves a client by ID
      * GET /api/clients/{id}
@@ -57,7 +100,20 @@ public class ClientController {
         ClientDTO clientDTO = EntityMapper.toClientDTO(client);
         return ResponseEntity.ok(clientDTO);
     }
-
+    @Operation(
+            summary = "Get all clients",
+            description = "Retrieves a list of all clients in the system"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of clients returned successfully (may be empty)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            )
+    })
     /**
      * Retrieves all clients
      * GET /api/clients
@@ -72,6 +128,20 @@ public class ClientController {
         return ResponseEntity.ok(clientDTOs);
     }
 
+    @Operation(
+            summary = "Search clients by name",
+            description = "Searches for clients whose names contain the provided search term (case-insensitive)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Search completed successfully, returns matching clients",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            )
+    })
     /**
      * Searches clients by name
      * GET /api/clients/search?name={name}
@@ -87,6 +157,25 @@ public class ClientController {
         return ResponseEntity.ok(clientDTOs);
     }
 
+    @Operation(
+            summary = "Get clients by age range",
+            description = "Retrieves clients whose ages fall within the specified range (inclusive)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Clients within age range returned successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid age range (minAge greater than maxAge)",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Gets clients by age range
      * GET /api/clients/age-range?minAge={min}&maxAge={max}
@@ -105,6 +194,30 @@ public class ClientController {
         return ResponseEntity.ok(clientDTOs);
     }
 
+    @Operation(
+            summary = "Update an existing client",
+            description = "Updates the information of an existing client. The new name must be unique if changed."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Client updated successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Client not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid input data or duplicate client name",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Updates an existing client
      * PUT /api/clients/{id}
@@ -122,6 +235,26 @@ public class ClientController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Delete a client",
+            description = "Deletes a client from the system. Cannot delete clients who have existing orders."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Client deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Client not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Cannot delete client with existing orders",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Deletes a client by ID
      * DELETE /api/clients/{id}
@@ -134,6 +267,20 @@ public class ClientController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+            summary = "Get clients with orders",
+            description = "Retrieves all clients who have placed at least one order"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of clients with orders returned successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            )
+    })
     /**
      * Gets clients who have orders
      * GET /api/clients/with-orders
@@ -148,6 +295,20 @@ public class ClientController {
         return ResponseEntity.ok(clientDTOs);
     }
 
+    @Operation(
+            summary = "Get clients without orders",
+            description = "Retrieves all clients who have not placed any orders yet"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of clients without orders returned successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClientDTO.class)
+                    )
+            )
+    })
     /**
      * Gets clients without orders
      * GET /api/clients/without-orders
@@ -162,6 +323,22 @@ public class ClientController {
         return ResponseEntity.ok(clientDTOs);
     }
 
+    @Operation(
+            summary = "Get client order count",
+            description = "Returns the total number of orders placed by a specific client"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order count returned successfully",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Client not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Gets order count for a client
      * GET /api/clients/{id}/order-count

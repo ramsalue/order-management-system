@@ -6,6 +6,12 @@ import com.meli.ordermanagementsystem.model.Order;
 import com.meli.ordermanagementsystem.model.OrderStatus;
 import com.meli.ordermanagementsystem.service.OrderService;
 import com.meli.ordermanagementsystem.util.EntityMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -24,6 +30,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/orders")
+@Tag(name = "Orders", description = "Order management operations")
 public class OrderController {
 
     private final OrderService orderService;
@@ -36,6 +43,30 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    @Operation(
+            summary = "Create a new order",
+            description = "Creates a new order in the system. Requires an existing client and at least one item. Order status defaults to PENDING."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Order created successfully with complete details including client and items",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = OrderResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid input data, client not found, or items not found",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Client or one or more items not found",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Creates a new order
      * POST /api/orders
@@ -54,6 +85,25 @@ public class OrderController {
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
+    @Operation(
+            summary = "Get order by ID",
+            description = "Retrieves a complete order by its unique identifier, including client information and all items"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order found and returned successfully with complete details",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = OrderResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Order not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Retrieves an order by ID
      * GET /api/orders/{id}
@@ -67,6 +117,20 @@ public class OrderController {
         return ResponseEntity.ok(orderResponseDTO);
     }
 
+    @Operation(
+            summary = "Get all orders",
+            description = "Retrieves a list of all orders in the system with complete details"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of orders returned successfully (may be empty)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = OrderResponseDTO.class)
+                    )
+            )
+    })
     /**
      * Retrieves all orders
      * GET /api/orders
@@ -161,6 +225,30 @@ public class OrderController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Update order status",
+            description = "Updates the status of an order. Valid transitions: PENDING->PROCESSING/CANCELLED, PROCESSING->SHIPPED/CANCELLED, SHIPPED->DELIVERED"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order status updated successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = OrderResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Order not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid status transition or order is already completed",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Updates order status
      * PATCH /api/orders/{id}/status
@@ -209,6 +297,30 @@ public class OrderController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Cancel an order",
+            description = "Cancels an order. Can only cancel orders with PENDING or PROCESSING status."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order cancelled successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = OrderResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Order not found with the provided ID",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Order cannot be cancelled (already shipped, delivered, or cancelled)",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Cancels an order
      * POST /api/orders/{id}/cancel

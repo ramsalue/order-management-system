@@ -1,10 +1,10 @@
 # MELI Order Management System
 
-REST API for managing clients, items, and orders in the MELI e-commerce platform. Built with Spring Boot 3.0, Java 17, and PostgreSQL.
+REST API for managing clients, items, and orders in the MELI e-commerce platform. Built with Spring Boot 3.2, Java 17, and PostgreSQL.
 
 ## Project Overview
 
-This project was developed as part of the Digital NAO Backend Developer Certification program to solve technical issues in MELI's order management system. The system provides a robust and flexible approach to order processing with proper database management, environment configuration, and comprehensive API documentation.
+This project was developed as part of the Digital NAO Backend Developer Certification program to solve technical issues in MELI's order management system. The system provides a robust and flexible approach to order processing with proper database management, environment configuration, comprehensive API documentation, and thorough testing.
 
 ## Table of Contents
 
@@ -14,461 +14,436 @@ This project was developed as part of the Digital NAO Backend Developer Certific
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Running the Application](#running-the-application)
-- [API Documentation](#api-endpoints)
+- [Running with Profiles](#running-with-profiles)
+- [API Documentation (Swagger)](#api-documentation-swagger)
+- [Testing](#testing)
 - [Project Structure](#project-structure)
-- [Running with profiles](#running-with-profiles)
-- [Production deployment](#production-deployment)
-- [Environment variables](#environment-profiles)
-- [Configuration validation](#configuration-validation)
+- [Production Deployment](#production-deployment)
 - [Documentation](#documentation)
 - [License](#license)
+- [Author](#author)
+
+---
 
 ## Technologies Used
 
 - **Java:** 17
-- **Spring Boot:** 3.2.0
-- **Spring Data JPA:** For database operations
+- **Spring Boot:** 3.2.11
+- **Spring Framework:** 6.1.x (Managed by Spring Boot)
+- **Spring Data JPA / Hibernate:** For database operations
 - **PostgreSQL:** 14+ (Database)
 - **Maven:** Build tool
-- **Postman:** API testing
+- **springdoc-openapi:** 2.5.0 (Swagger/OpenAPI Documentation)
+- **JUnit 5 / Mockito / AssertJ:** Unit & Integration Testing
+- **JaCoCo:** Code Coverage
+- **Postman:** API testing (Manual)
 - **Git:** Version control
+
+---
 
 ## System Requirements
 
 - Java Development Kit (JDK) 17 or higher
 - PostgreSQL 14 or higher
 - Maven 3.6+ (or use included Maven Wrapper)
-- Postman (optional, for API testing)
-- IDE: IntelliJ IDEA or VS Code with Java extensions
+- IDE: IntelliJ IDEA or VS Code with Java extensions recommended
+- Postman (Optional, for manual API testing)
+
+---
 
 ## Database Schema
 
 ### Entities
 
 **Client**
-- `id_client` (BIGSERIAL, Primary Key)
+- `id_client` (BIGSERIAL, PK)
 - `name` (VARCHAR(100), NOT NULL, UNIQUE)
 - `address` (VARCHAR(255), NOT NULL)
 - `age` (INTEGER, NOT NULL, CHECK age >= 18)
 
 **Item**
-- `item_id` (BIGSERIAL, Primary Key)
+- `item_id` (BIGSERIAL, PK)
 - `name` (VARCHAR(150), NOT NULL, UNIQUE)
 - `description` (VARCHAR(500))
 - `price` (NUMERIC(10,2), NOT NULL, CHECK price > 0)
 
 **Order**
-- `id_order` (BIGSERIAL, Primary Key)
-- `id_client` (BIGINT, Foreign Key -> Client)
+- `id_order` (BIGSERIAL, PK)
+- `id_client` (BIGINT, FK -> Client)
 - `purchase_date` (DATE, NOT NULL)
 - `delivery_date` (DATE)
-- `status` (VARCHAR(255), NOT NULL)
+- `status` (VARCHAR(255), NOT NULL CHECK (status IN ('PENDING','PROCESSING','SHIPPED','DELIVERED','CANCELLED')))
 
 **Order_Items** (Junction Table)
-- `id_order` (BIGINT, Foreign Key -> Order)
-- `item_id` (BIGINT, Foreign Key -> Item)
+- `id_order` (BIGINT, FK -> Order)
+- `item_id` (BIGINT, FK -> Item)
 - Primary Key: (id_order, item_id)
 
 ### Relationships
 
 - Client → Order: One-to-Many
-- Order ↔ Item: Many-to-Many (through order_items)
+- Order ↔ Item: Many-to-Many (via `order_items`)
+
+---
 
 ## Installation
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/ramsalue/order-management-system.git
+git clone [https://github.com/ramsalue/order-management-system.git](https://github.com/ramsalue/order-management-system.git)
 cd order-management-system
-```
+````
 
-### 2. Set Up PostgreSQL Database
+### 2\. Set Up PostgreSQL Database
+
+Connect to PostgreSQL (e.g., using `psql -U postgres`) and run the following SQL commands:
 
 ```sql
--- Connect to PostgreSQL
-psql -U postgres
-
--- Create database
+-- Create database for development
 CREATE DATABASE meli_order_db;
 
--- Create user (optional)
-CREATE USER'db_user' WITH PASSWORD 'db_password';
+-- Create database for testing
+CREATE DATABASE meli_order_db_test;
+
+-- Create user for development (adjust password as needed)
+CREATE USER meli_user WITH PASSWORD 'your_dev_password';
 GRANT ALL PRIVILEGES ON DATABASE meli_order_db TO meli_user;
 GRANT ALL ON SCHEMA public TO meli_user;
+
+-- Create user for testing (adjust password as needed)
+CREATE USER meli_test_user WITH PASSWORD 'your_test_password';
+GRANT ALL PRIVILEGES ON DATABASE meli_order_db_test TO meli_test_user;
+GRANT ALL ON SCHEMA public TO meli_test_user;
 ```
 
-### 3. Configure Application Properties
+### 3\. Configure Local Environment Variables
 
-Change name and edit `src/main/resources/application.properties`:
-
-```properties
-# Database Configuration
-spring.datasource.url=jdbc:postgresql://localhost:5432/meli_order_db
-spring.datasource.username=meli_user
-spring.datasource.password=db_password
-
-# Other configurations are already set
-```
-
-### 4. Build the Project
-
-Using installed Maven:
+For local development, create a file named `.env` in the project root (this file is ignored by Git). Add your local database credentials:
 
 ```bash
-mvn clean install
+# .env file content
+DB_USERNAME=meli_user
+DB_PASSWORD=your_dev_password
 ```
+
+*(Similarly, you can set `DB_TEST_USERNAME` and `DB_TEST_PASSWORD` if you don't use the defaults in `application-test.properties`)*
+
+### 4\. Build the Project
+
+Using the Maven Wrapper (recommended):
+
+```bash
+# Windows
+./mvnw.cmd clean install
+
+# Mac/Linux
+./mvnw clean install
+```
+
+-----
 
 ## Configuration
 
-### Application Properties
+The application uses a profile-based configuration system:
 
-The application uses the following default configuration:
+  - **`application.properties`**: Contains settings shared across all profiles.
+  - **`application-dev.properties`**: Settings for local development (DEBUG logging, auto-reload, local DB).
+  - **`application-test.properties`**: Settings for automated testing (INFO logging, test DB, create-drop schema).
+  - **`application-prod.properties`**: Settings for production (WARN logging, requires environment variables for credentials, secure defaults).
 
-- **Server Port:** 8080
-- **Database:** PostgreSQL on localhost:5432
-- **JPA DDL Auto:** update (automatically creates/updates schema)
-- **Logging Level:** DEBUG for application, INFO for root
+Sensitive information (like database passwords) is configured via **environment variables**, especially for the production profile.
 
+See the guides below for full details:
+
+  - [Configuration Guide](docs/CONFIGURATION_GUIDE.md)
+  - [Environment Variables](docs/ENVIRONMENT_VARIABLES.md)
+  - [Profile Comparison](docs/PROFILE_COMPARISON.md)
+
+-----
 
 ## Running the Application
 
-### Using Java
+### Default (Development Profile)
+
+If no profile is specified, the `dev` profile runs by default. You need to load your `.env` file first.
 
 ```bash
-java -jar target/order-management-system-0.0.1-SNAPSHOT.jar
-```
-### Verify Application is Running
+# Load variables (Mac/Linux - use 'source' for Git Bash on Windows)
+source .env
 
-Open a browser or use curl:
-
-```bash
-curl http://localhost:8080/api/clients
-```
-
-You should receive an empty array `[]` or a list of clients.
-
-## API endpoints
-For testin, you can review complete documentation in `postman/` folder:
-- [API documentation](postman/API_DOCUMENTATION.md)
----
-
-# Updates added with Sprint 2
-## Project structure
-```
-order-management-system/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/meli/ordermanagementsystem/
-│   │   │       ├── controller/
-│   │   │       │   ├── ApplicationProperties.java
-│   │   │       │   ├── ConfigurationValidator.java
-│   │   │       │   ├── DatabaseConnection.java
-│   │   │       │   ├── DabatabaseProperties.java
-│   │   │       │   ├── DevelopmentConfig.java
-│   │   │       │   ├── ProductionConfig.java
-│   │   │       │   ├── RepositoryTest.java
-│   │   │       │   ├── ServiceTest.java
-│   │   │       │   ├── StartupInfoLogger.java
-│   │   │       │   └── TestConfig.java
-│   │   │       ├── controller/          # REST controllers
-│   │   │       │   ├── ClientController.java
-│   │   │       │   ├── InfoController.java
-│   │   │       │   ├── ItemController.java
-│   │   │       │   └── OrderController.java
-│   │   │       ├── dto/                 # Data Transfer Objects
-│   │   │       │   ├── ClientDTO.java
-│   │   │       │   ├── ItemDTO.java
-│   │   │       │   ├── OrderDTO.java
-│   │   │       │   └── OrderResponseDTO.java
-│   │   │       ├── exception/           # Custom exceptions
-│   │   │       │   ├── BusinessException.java
-│   │   │       │   ├── ResourceNotFoundException.java
-│   │   │       │   └── GlobalExceptionHandler.java
-│   │   │       ├── model/               # Entity classes
-│   │   │       │   ├── Client.java
-│   │   │       │   ├── Item.java
-│   │   │       │   ├── Order.java
-│   │   │       │   └── OrderStatus.java
-│   │   │       ├── repository/          # JPA repositories
-│   │   │       │   ├── ClientRepository.java
-│   │   │       │   ├── ItemRepository.java
-│   │   │       │   └── OrderRepository.java
-│   │   │       ├── service/             # Business logic
-│   │   │       │   ├── ClientService.java
-│   │   │       │   ├── EnivironmentService.java
-│   │   │       │   ├── ItemService.java
-│   │   │       │   └── OrderService.java
-│   │   │       ├── util/                # Utility classes
-│   │   │       │   └── EntityMapper.java
-│   │   │       └── OrderManagementSystemApplication.java
-│   │   └── resources/                   # Includes application-*.properties files and banner-*.txt for every profile
-│   │       ├── application.properties   # Configuration
-│   │       └── static/                  # Static resources
-│   └── test/
-│       └── java/                        # Test classes (Sprint 3)
-│       │   └── com/meli/ordermanagementsystem/
-│       │       ├── integration/                
-│       │       │   └── ClientIntegrationTest.java
-│       │       └── OrderManagementSystemApplicationTests.java
-│       └── resources/
-│           └── application.properties
-├── postman/                             # Postman collection
-│   ├── MELI_Order_Management_System.postman_collection.json
-│   ├── Local_Development.postman_environment.json
-│   └── POSTMAN_GUIDE.md
-├── docs/                                # Additional documentation
-│   ├── Screenshots_Sprint1              # Screenshots sprint 1   
-│   ├── SPRINT1_SUMMARY.md           
-│   ├── SPRINT2_SUMMARY.md           
-│   ├── SPRINT2_TEST_PLAN.md   
-│   ├── PROFILE_COMPARISON.md
-│   ├── ENVIRONMENT_VARIABLES.md 
-│   └── CONFIGURATION_GUIDE.md          
-├── .gitignore
-├── pom.xml                              # Maven configuration
-├── README.md                            # This file
-└── startup.sh / startup.bat             # Startup scripts
-```
-
-
-## Running with Profiles
-
-### Development Profile (Recommended for Local Development)
-
-The development profile is optimized for local development with:
-- Detailed logging (DEBUG level)
-- SQL query logging
-- Automatic restart on code changes
-- Local PostgreSQL database
-- All error details visible
-
-**Start with Development Profile:**
-
-Using Maven:
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-Using JAR:
-```bash
-java -jar target/order-management-system-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
-```
-
-Using Environment Variable:
-```bash
-export SPRING_PROFILES_ACTIVE=dev
+# Run using Maven Wrapper
 ./mvnw spring-boot:run
 ```
 
-**Verify Active Profile:**
+### Running Specific Profiles
+
+Use the `-Dspring-boot.run.profiles` flag:
+
 ```bash
+# Run Development Profile
+source .env
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Run Testing Profile (Runs on Port 8081)
+# (Test credentials have defaults, but can be set via env vars if needed)
+./mvnw spring-boot:run -Dspring-boot.run.profiles=test
+
+# Run Production Profile (Locally - Requires DB variables)
+# Uses the reliable argument passing method
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod -Dspring-boot.run.arguments="--spring.datasource.username=your_prod_user --spring.datasource.password=your_prod_password --spring.datasource.url=jdbc:postgresql://your_prod_host:5432/your_prod_db"
+```
+
+*(Replace `your_prod_...` with actual values for local testing)*
+
+See [Running with Profiles](#running-with-profiles) below for more details.
+
+### Verify Application is Running
+
+```bash
+# Check the Info endpoint
 curl http://localhost:8080/api/info
+
+# Check the Health endpoint
+curl http://localhost:8080/api/info/health
 ```
 
-Should return: `"activeProfiles": "[dev]"`
+-----
 
-**Development Database Setup:**
+## Running with Profiles
 
-The development profile uses local PostgreSQL. Environment variables with fallback values:
-- Username: `DB_USERNAME` (default: meli_user)
-- Password: `DB_PASSWORD` (default: 'your_db_password')
+The application supports three environment profiles: `dev`, `test`, `prod`.
 
-To use custom credentials, set environment variables:
+### Development Profile (`dev`)
+
+Optimized for local development.
+
+**Activation:**
+
 ```bash
-export DB_USERNAME=your_username
-export DB_PASSWORD=your_password
+# Load .env first
+source .env
+# Run command
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
---- 
+
+*(Or simply `./mvnw spring-boot:run` after sourcing `.env`, as `dev` is the default if `spring.profiles.active` is not set in `application.properties`)*
+
+**Features:** Port 8080, DEBUG logging, SQL logging, DevTools auto-reload, CORS enabled, uses `meli_order_db`.
+
+### Testing Profile (`test`)
+
+Used for automated testing.
+
+**Activation (usually automatic via `./mvnw test`):**
+
+```bash
+# Manual start on port 8081
+./mvnw spring-boot:run -Dspring-boot.run.profiles=test
+```
+
+**Features:** Port 8081, INFO logging, uses `meli_order_db_test`, `create-drop` schema, transaction rollback.
+
+### Production Profile (`prod`)
+
+Optimized for deployment. Requires external configuration via environment variables or command-line arguments.
+
+**Activation (Example using arguments for local simulation):**
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod -Dspring-boot.run.arguments="--spring.datasource.username=meli_user --spring.datasource.password=your_dev_password --spring.datasource.url=jdbc:postgresql://localhost:5432/meli_order_db"
+```
+
+**Features:** Port 8080, WARN/ERROR logging, secure defaults, `validate` schema, requires external credentials.
+
+See [Profile Comparison](docs/PROFILE_COMPARISON.md) for a detailed breakdown.
+
+-----
+
+## API Documentation (Swagger)
+
+### Interactive Documentation
+
+Access the interactive Swagger UI when running the `dev` profile:
+`http://localhost:8080/swagger-ui.html`
+
+**Features:**
+
+  - View all 40+ endpoints across 4 functional areas (Clients, Items, Orders, System)
+  - Read detailed descriptions and parameter requirements
+  - See request/response examples and schemas
+  - Test endpoints directly using the "Try it out" feature
+
+### OpenAPI Specification
+
+The raw OpenAPI 3.0 specification is available for integration with other tools:
+
+  - **JSON:** `http://localhost:8080/api-docs`
+  - **YAML:** `http://localhost:8080/api-docs.yaml`
+
+See the [Swagger Guide](docs/SWAGGER_GUIDE.md) and [API Documentation](postman/API_DOCUMENTATION.md) for more details.
+
+-----
+
+## Testing
+
+The application includes a comprehensive test suite using JUnit 5, Mockito, and Spring Boot Test.
+
+### Test Types
+
+1.  **Unit Tests:** (`src/test/java/.../service/`) Test service layer logic in isolation using Mockito. (\~64 tests)
+2.  **Integration Tests:** (`src/test/java/.../integration/`) Test the full application stack (Controller -\> Service -\> Repository -\> Test Database) using MockMvc. (\~49 tests)
+
+### Running Tests
+
+```bash
+# Run all tests (Unit + Integration)
+./mvnw test
+
+# Run only Unit Tests
+./mvnw test -Dtest=*ServiceTest
+
+# Run only Integration Tests
+./mvnw test -Dtest=*IntegrationTest
+```
+
+### Code Coverage (JaCoCo)
+
+Code coverage is measured using the JaCoCo plugin.
+
+```bash
+# Run tests AND generate coverage report
+./mvnw clean test jacoco:report
+
+# View the HTML report
+# Open target/site/jacoco/index.html in your browser
+```
+
+**Targets:** Line Coverage \>= 70%, Branch Coverage \>= 60%.
+
+See the [Unit Testing Guide](docs/UNIT_TESTING_GUIDE.md), [Integration Tests Documentation](docs/INTEGRATION_TESTS_DOCUMENTATION.md), and [Test Coverage Report](docs/TEST_COVERAGE_REPORT.md) for full details.
+
+-----
+
+## Project Structure
+
+```
+.
+|____.env                           # Local environment variables (Gitignored)
+|____.env.production.template      # Template for production variables
+|____.env.template                 # Template for local variables
+|____.gitattributes
+|____.gitignore
+|____.mvn
+|____docs                           # Project Documentation Files
+| |____CONFIGURATION_GUIDE.md
+| |____ENVIRONMENT_VARIABLES.md
+| |____INTEGRATION_TESTS_DOCUMENTATION.md
+| |____PROFILE_COMPARISON.md
+| |____Screenshots_Sprint1         # Example Screenshots
+| |____SPRINT1_SUMMARY.md
+| |____SPRINT2_SUMMARY.md
+| |____SPRINT2_TEST_PLAN.md
+| |____SPRINT3_SUMMARY.md
+| |____SWAGGER_GUIDE.md
+| |____TEST_COVERAGE_REPORT.md
+| |____UNIT_TESTING_GUIDE.md
+|____mvnw
+|____mvnw.cmd
+|____pom.xml                        # Maven Project Configuration
+|____postman                        # Postman Collection & Guides
+| |____API_DOCUMENTATION.md
+| |____Local_Development.postman_environment.json
+| |____MELI_Order_Management_System.postman_collection.json
+| |____OpenAPI Specification
+| |____POSTMAN_GUIDE.md
+|____project_structure.txt          # Generated structure file
+|____README.md                      # This file
+|____scripts                        # Deployment & Utility Scripts
+| |____deploy-prod.sh
+| |____health-check-prod.sh
+| |____test-stats.sh
+| |____validate-db-schema.sh
+|____src
+| |____main
+| | |____java
+| | | |____com/meli/ordermanagementsystem # Main application package
+| | | | |____config              # Spring configuration, Swagger, Validation
+| | | | |____controller          # REST API Controllers
+| | | | |____dto                 # Data Transfer Objects
+| | | | |____exception           # Custom Exceptions & Global Handler
+| | | | |____model               # JPA Entities & Enum
+| | | | |____repository          # Spring Data JPA Repositories
+| | | | |____service             # Business Logic Services
+| | | | |____util                # Utility classes (e.g., Mappers)
+| | | | |____OrderManagementSystemApplication.java # Main class
+| | |____resources               # Configuration, static files
+| | | |____application.properties    # Shared properties
+| | | |____application-dev.properties # Dev profile
+| | | |____application-prod.properties # Prod profile (Gitignored)
+| | | |____application-test.properties # Test profile
+| | | |____banner-dev.txt            # Custom banners
+| | | |____banner-prod.txt
+| | | |____banner-test.txt
+| | | |____static
+| | | |____templates
+| |____test                         # Test code
+| | |____java
+| | | |____com/meli/ordermanagementsystem # Test packages mirror main
+| | | | |____integration         # Integration Tests (Controller/DB level)
+| | | | |____service             # Unit Tests (Service level)
+| | | | |____TestConfig.java     # Test constants
+| | |____resources
+| | | |____application.properties    # Test profile activation
+|____startup.bat                    # Windows startup script (example)
+
+```
+
+*(Note: Some files like `startup.sh`, specific integration tests, etc., might be present based on previous steps but kept brief here)*
+
+-----
+
 ## Production Deployment
+
+This application is configured for production deployment using environment variables.
 
 ### Prerequisites
 
-1. PostgreSQL database server
-2. Production environment variables configured
-3. Application built and tested
-4. Database schema created and validated
+1.  A server environment with Java 17+ and PostgreSQL.
+2.  Production database created and accessible.
+3.  Environment variables set for database credentials (`DB_HOST`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`).
 
-### Deployment Steps
+### Steps
 
-**Step 1: Prepare Environment**
+1.  **Build the JAR:** `./mvnw clean package -DskipTests`
+2.  **Set Environment Variables:** Configure the required variables on the server.
+3.  **Run the JAR:** `java -jar target/order-management-system-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod`
 
-```bash
-# Copy template and fill with real credentials
-cp .env.production.template .env.production
+Deployment scripts (`deploy-prod.sh`, `health-check-prod.sh`, `validate-db-schema.sh`) are provided as examples and may need adjustment for your specific production environment.
 
-# Edit .env.production with production values
-nano .env.production
-```
-
-**Step 2: Validate Database Schema**
-
-```bash
-./validate-db-schema.sh
-```
-
-**Step 3: Deploy Application**
-
-```bash
-./deploy-prod.sh
-```
-
-**Step 4: Verify Deployment**
-
-```bash
-./health-check-prod.sh
-```
-
-### Production Configuration
-
-**Environment Variables Required:**
-- `DB_HOST`: Production database host
-- `DB_PORT`: Database port (default: 5432)
-- `DB_NAME`: Database name
-- `DB_USERNAME`: Database user
-- `DB_PASSWORD`: Database password
-- `SERVER_PORT`: Application port (default: 8080)
-- `MANAGEMENT_PORT`: Actuator management port (default: 9090)
-- `LOG_FILE_PATH`: Log file location
-
-**Security Notes:**
-- Never commit `.env.production` to Git
-- Use strong passwords for production database
-- Ensure proper file permissions on production server
-- Regularly rotate credentials
-- Monitor logs for security issues
-
-**Monitoring:**
-- Health check: `http://server:9090/actuator/health`
-- Metrics: `http://server:9090/actuator/metrics`
-- Application info: `http://server:8080/api/info`
-
-**Troubleshooting:**
-- Check logs at: `/var/log/meli/application.log`
-- Verify environment variables are set
-- Ensure database is accessible
-- Check firewall rules
-- Verify database schema matches application
-
-## Environment Profiles
-
-The application supports three environment profiles:
-
-### Development Profile (dev)
-**Use for:** Local development and debugging
-
-**Activation:**
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-**Features:**
-- Detailed DEBUG logging
-- SQL queries logged
-- CORS enabled for local frontend
-- DevTools auto-reload enabled
-- Local PostgreSQL database
-- Port: 8080
-
-**Configuration:** `application-dev.properties`
-
-### Testing Profile (test)
-**Use for:** Automated testing and CI/CD
-
-**Activation:**
-```bash
-./mvnw test -Dspring.profiles.active=test
-```
-
-**Features:**
-- INFO level logging
-- Separate test database
-- Transaction rollback after tests
-- Schema create-drop mode
-- Port: 8081
-
-**Configuration:** `application-test.properties`
-
-### Production Profile (prod)
-**Use for:** Production deployment
-
-**Activation:**
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=prod -Dspring-boot.run.arguments="--spring.datasource.username=meli_user --spring.datasource.password='your_db_password'"
-```
-
-**Features:**
-- WARN/ERROR logging only
-- All credentials from environment variables
-- Error details hidden
-- Optimized connection pool
-- DDL validate mode (no schema changes)
-- Port: 8080 (configurable)
-
-**Configuration:** `application-prod.properties`
-
-**Required Environment Variables:**
-- `DB_HOST` - Database server hostname
-- `DB_USERNAME` - Database username
-- `DB_PASSWORD` - Database password
-- See [Environment Variables Guide](docs/ENVIRONMENT_VARIABLES.md) for complete list
-
-## Configuration Validation
-
-The application validates configuration at startup:
-
-```
-========================================
-CONFIGURATION VALIDATION
-========================================
-Active Profile: [dev]
-Database URL: localhost:5432
-...
-========================================
-CONFIGURATION VALIDATION PASSED
-========================================
-```
-
-If configuration is invalid, the application will fail to start with clear error messages.
-
-## Profile Switching
-
-To switch between profiles:
-
-1. Stop the application
-2. Set the desired profile
-3. Start the application
-
-**Example:**
-```bash
-# Development
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-
-# Testing  
-./mvnw spring-boot:run -Dspring-boot.run.profiles=test
-
-# Production (with env vars)
-export DB_HOST=prod-server
-export DB_USERNAME=prod_user
-export DB_PASSWORD=prod_pass
-./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
-```
+-----
 
 ## Documentation
 
-Complete documentation available in `docs/` folder:
-- [Configuration Guide](docs/CONFIGURATION_GUIDE.md)
-- [Environment Variables](docs/ENVIRONMENT_VARIABLES.md)
-- [Profile Comparison](docs/PROFILE_COMPARISON.md)
----
+Comprehensive project documentation is located in the `docs/` directory, covering:
+
+  - Configuration and Profiles
+  - Environment Variables
+  - API Usage (Static and Swagger)
+  - Testing Strategy and Coverage
+  - Project Structure
+  - Sprint Summaries
+
+-----
 
 ## License
 
 This project is created for educational purposes as part of the Digital NAO In-Mexico Program.
 
+-----
+
 ## Author
 
-Luis E Ramirez  
-Digital NAO Backend Developer Certification  
-Date: October 20, 2025
+Luis E Ramirez\
+Digital NAO Backend Developer Certification\
+Date: October 22, 2025

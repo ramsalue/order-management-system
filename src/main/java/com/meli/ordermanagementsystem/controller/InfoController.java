@@ -1,5 +1,10 @@
 package com.meli.ordermanagementsystem.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/info")
+@Tag(name = "System", description = "System information endpoints")
 public class InfoController {
 
     private final Environment environment;
@@ -27,6 +33,17 @@ public class InfoController {
         this.environment = environment;
     }
 
+    @Operation(
+            summary = "Get application information",
+            description = "Returns general application information including name, version, active profile, and server port"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Application information returned successfully",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     @GetMapping
     public Map<String, Object> getInfo() {
         Map<String, Object> info = new HashMap<>();
@@ -38,6 +55,17 @@ public class InfoController {
         return info;
     }
 
+    @Operation(
+            summary = "Health check endpoint",
+            description = "Returns the health status of the application and active profile"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Application is healthy and running",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     @GetMapping("/health")
     public Map<String, String> health() {
         Map<String, String> health = new HashMap<>();
@@ -48,6 +76,17 @@ public class InfoController {
         return health;
     }
 
+    @Operation(
+            summary = "Get environment information",
+            description = "Returns detailed environment configuration including database type, connection pool settings, and JPA configuration"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Environment information returned successfully",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
     /**
      * Gets detailed environment information
      * GET /api/info/environment
