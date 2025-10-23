@@ -35,7 +35,7 @@ public class Order {
      * Expected delivery date
      * Should be after or equal to purchase date
      */
-    @Future(message = "Delivery date must be in the future")
+    //@Future(message = "Delivery date must be in the future")
     @Column(name = "delivery_date")
     private LocalDate deliveryDate;
 
@@ -54,7 +54,7 @@ public class Order {
      * Cannot be null
      */
     @NotNull(message = "Client is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_client", nullable = false)
     private Client client;
 
@@ -63,7 +63,7 @@ public class Order {
      * Many-to-Many relationship with Item entity
      * Uses junction table 'order_items'
      */
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.EAGER)
     @JoinTable(
             name = "order_items",
             joinColumns = @JoinColumn(name = "id_order"),
